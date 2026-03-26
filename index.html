@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Solver Gauss y LU</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: linear-gradient(135deg, #eef2f7, #d9e2ec);
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h2 {
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+
+    select, button {
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      margin: 5px;
+      font-size: 14px;
+    }
+
+    button {
+      background: #3498db;
+      color: white;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #2980b9;
+    }
+
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      display: inline-block;
+    }
+
+    table {
+      margin: 20px auto;
+      border-collapse: collapse;
+    }
+
+    td {
+      padding: 5px;
+    }
+
+    input {
+      width: 60px;
+      padding: 5px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      text-align: center;
+      transition: 0.2s;
+    }
+
+    input:focus {
+      border-color: #3498db;
+      outline: none;
+      box-shadow: 0 0 5px rgba(52,152,219,0.5);
+    }
+
+    .b-col {
+      border-left: 3px solid #2c3e50;
+      padding-left: 10px;
+    }
+
+    pre {
+      text-align: left;
+      width: 90%;
+      margin: 20px auto;
+      background: #1e272e;
+      color: #00ffcc;
+      padding: 15px;
+      border-radius: 10px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+<h2>Resolución de Sistemas (Gauss y LU)</h2>
+
+<label>Tamaño:</label>
+<select id="size">
+  <option value="3">3x3</option>
+  <option value="4">4x4</option>
+  <option value="5">5x5</option>
+  <option value="6">6x6</option>
+</select>
+
+<button onclick="generarTabla()">Generar</button>
+
+<div id="matriz"></div>
+
+<button onclick="resolver()">Resolver</button>
+
+</div>
+
+<pre id="resultado"></pre>
+
+<script>
+function generarTabla() {
+  const n = parseInt(document.getElementById("size").value);
+  let html = "<table>";
+
+  for (let i = 0; i < n; i++) {
+    html += "<tr>";
+
+    for (let j = 0; j < n; j++) {
+      html += `<td><input type='number' step='any' id='a${i}_${j}'></td>`;
+    }
+
+    html += `<td class='b-col'><input type='number' step='any' id='b${i}'></td>`;
+
+    html += "</tr>";
+  }
+
+  html += "</table>";
+  document.getElementById("matriz").innerHTML = html;
+}
+
+function obtenerDatos() {
+  const n = parseInt(document.getElementById("size").value);
+  let A = [], B = [];
+
+  for (let i = 0; i < n; i++) {
+    A[i] = [];
+    for (let j = 0; j < n; j++) {
+      A[i][j] = parseFloat(document.getElementById(`a${i}_${j}`).value) || 0;
+    }
+    B[i] = parseFloat(document.getElementById(`b${i}`).value) || 0;
+  }
+
+  return {A, B, n};
+}
+
+function gauss(A, B, n) {
+  for (let i = 0; i < n; i++) {
+    let maxRow = i;
+    for (let k = i + 1; k < n; k++) {
+      if (Math.abs(A[k][i]) > Math.abs(A[maxRow][i])) {
+        maxRow = k;
+      }
+    }
+
+    [A[i], A[maxRow]] = [A[maxRow], A[i]];
+    [B[i], B[maxRow]] = [B[maxRow], B[i]];
+
+    if (A[i][i] === 0) throw "Sin solución única";
+
+    for (let k = i + 1; k < n; k++) {
+      let factor = A[k][i] / A[i][i];
+      for (let j = i; j < n; j++) {
+        A[k][j] -= factor * A[i][j];
+      }
+      B[k] -= factor * B[i];
+    }
+  }
+
+  let x = new Array(n);
+  for (let i = n - 1; i >= 0; i--) {
+    let sum = B[i];
+    for (let j = i + 1; j < n; j++) {
+      sum -= A[i][j] * x[j];
+    }
+    x[i] = sum / A[i][i];
+  }
+
+  return x;
+}
+
+function LU(A, n) {
+  let L = Array.from({ length: n }, () => Array(n).fill(0));
+  let U = Array.from({ length: n }, () => Array(n).fill(0));
+
+  for (let i = 0; i < n; i++) L[i][i] = 1;
+
+  for (let j = 0; j < n; j++) {
+    for (let i = 0; i <= j; i++) {
+      let sum = 0;
+      for (let k = 0; k < i; k++) sum += L[i][k] * U[k][j];
+      U[i][j] = A[i][j] - sum;
+    }
+
+    for (let i = j + 1; i < n; i++) {
+      let sum = 0;
+      for (let k = 0; k < j; k++) sum += L[i][k] * U[k][j];
+      if (U[j][j] === 0) throw "No se puede hacer LU";
+      L[i][j] = (A[i][j] - sum) / U[j][j];
+    }
+  }
+
+  return {L, U};
+}
+
+function resolver() {
+  try {
+    let {A, B, n} = obtenerDatos();
+
+    let A_copy = JSON.parse(JSON.stringify(A));
+    let B_copy = [...B];
+
+    let x = gauss(A_copy, B_copy, n);
+    let {L, U} = LU(A, n);
+
+    let res = "Solución:\n" + x.map(v => v.toFixed(4)).join("\n");
+    res += "\n\nL:\n" + JSON.stringify(L, null, 2);
+    res += "\n\nU:\n" + JSON.stringify(U, null, 2);
+
+    document.getElementById("resultado").textContent = res;
+  } catch (e) {
+    document.getElementById("resultado").textContent = "Error: " + e;
+  }
+}
+</script>
+
+</body>
+</html>
