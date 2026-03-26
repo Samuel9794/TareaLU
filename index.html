@@ -1,75 +1,34 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Solver Métodos Numéricos</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, sans-serif;
-      background: linear-gradient(135deg, #eef2f7, #d9e2ec);
-      text-align: center;
-      padding: 20px;
-    }
-
-    .container {
-      background: white;
-      padding: 20px;
-      border-radius: 15px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-      display: inline-block;
-    }
-
-    select, button {
-      padding: 10px;
-      border-radius: 8px;
-      border: none;
-      margin: 5px;
-    }
-
-    button {
-      background: #3498db;
-      color: white;
-      cursor: pointer;
-    }
-
-    table { margin: 20px auto; }
-    input {
-      width: 60px;
-      padding: 5px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      text-align: center;
-    }
-
-    .b-col { border-left: 3px solid black; }
-
-    pre {
-      text-align: left;
-      width: 90%;
-      margin: 20px auto;
-      background: #1e272e;
-      color: #00ffcc;
-      padding: 15px;
-      border-radius: 10px;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Solver Métodos Numéricos PRO</title>
+<style>
+body {font-family: 'Segoe UI'; background: linear-gradient(135deg,#eef2f7,#d9e2ec); text-align:center; padding:20px;}
+.container {background:white;padding:20px;border-radius:15px;box-shadow:0 8px 20px rgba(0,0,0,0.1);display:inline-block;}
+select,button {padding:10px;border-radius:8px;border:none;margin:5px;}
+button {background:#3498db;color:white;cursor:pointer;}
+table{margin:20px auto;} input{width:60px;padding:5px;border-radius:6px;border:1px solid #ccc;text-align:center;}
+.b-col{border-left:3px solid black;}
+pre{white-space:pre-wrap;text-align:left;width:90%;margin:20px auto;background:#1e272e;color:#00ffcc;padding:15px;border-radius:10px;}
+</style>
 </head>
 <body>
 
 <div class="container">
-<h2>Solver de Sistemas</h2>
+<h2>Solver Métodos Numéricos PRO</h2>
 
 <select id="size">
-  <option value="3">3x3</option>
-  <option value="4">4x4</option>
-  <option value="5">5x5</option>
+<option value="3">3x3</option>
+<option value="4">4x4</option>
+<option value="5">5x5</option>
 </select>
 
 <select id="metodo">
-  <option value="gauss">Gauss</option>
-  <option value="doolittle">Doolittle (LU)</option>
-  <option value="crout">Crout (LU)</option>
-  <option value="cholesky">Cholesky</option>
+<option value="gauss">Gauss</option>
+<option value="doolittle">Doolittle</option>
+<option value="crout">Crout</option>
+<option value="cholesky">Cholesky</option>
 </select>
 
 <button onclick="generarTabla()">Generar</button>
@@ -81,137 +40,172 @@
 <pre id="resultado"></pre>
 
 <script>
-function generarTabla() {
-  const n = parseInt(size.value);
-  let html = "<table>";
-
-  for (let i = 0; i < n; i++) {
-    html += "<tr>";
-    for (let j = 0; j < n; j++) {
-      html += `<td><input id='a${i}_${j}' type='number'></td>`;
-    }
-    html += `<td class='b-col'><input id='b${i}' type='number'></td>`;
-    html += "</tr>";
-  }
-
-  html += "</table>";
-  matriz.innerHTML = html;
+function generarTabla(){
+const n=parseInt(size.value);
+let html="<table>";
+for(let i=0;i<n;i++){
+html+="<tr>";
+for(let j=0;j<n;j++) html+=`<td><input id='a${i}_${j}' type='number'></td>`;
+html+=`<td class='b-col'><input id='b${i}' type='number'></td>`;
+html+="</tr>";
+}
+html+="</table>";
+matriz.innerHTML=html;
 }
 
-function getData() {
-  const n = parseInt(size.value);
-  let A=[], B=[];
-  for (let i=0;i<n;i++){
-    A[i]=[];
-    for (let j=0;j<n;j++){
-      A[i][j]=parseFloat(document.getElementById(`a${i}_${j}`).value)||0;
-    }
-    B[i]=parseFloat(document.getElementById(`b${i}`).value)||0;
-  }
-  return {A,B,n};
+function getData(){
+const n=parseInt(size.value);
+let A=[],B=[];
+for(let i=0;i<n;i++){
+A[i]=[];
+for(let j=0;j<n;j++) A[i][j]=parseFloat(document.getElementById(`a${i}_${j}`).value)||0;
+B[i]=parseFloat(document.getElementById(`b${i}`).value)||0;
+}
+return {A,B,n};
 }
 
-function gauss(A,B,n){
-  for(let i=0;i<n;i++){
-    for(let k=i+1;k<n;k++){
-      let f=A[k][i]/A[i][i];
-      for(let j=i;j<n;j++) A[k][j]-=f*A[i][j];
-      B[k]-=f*B[i];
-    }
-  }
-  let x=new Array(n);
-  for(let i=n-1;i>=0;i--){
-    let sum=B[i];
-    for(let j=i+1;j<n;j++) sum-=A[i][j]*x[j];
-    x[i]=sum/A[i][i];
-  }
-  return x;
+function forwardSub(L,b){
+let y=[];
+for(let i=0;i<L.length;i++){
+let sum=b[i];
+for(let j=0;j<i;j++) sum-=L[i][j]*y[j];
+y[i]=sum/L[i][i];
+}
+return y;
 }
 
-function doolittle(A,n){
-  let L=Array.from({length:n},()=>Array(n).fill(0));
-  let U=Array.from({length:n},()=>Array(n).fill(0));
-  for(let i=0;i<n;i++) L[i][i]=1;
-
-  for(let j=0;j<n;j++){
-    for(let i=0;i<=j;i++){
-      let sum=0;
-      for(let k=0;k<i;k++) sum+=L[i][k]*U[k][j];
-      U[i][j]=A[i][j]-sum;
-    }
-    for(let i=j+1;i<n;i++){
-      let sum=0;
-      for(let k=0;k<j;k++) sum+=L[i][k]*U[k][j];
-      L[i][j]=(A[i][j]-sum)/U[j][j];
-    }
-  }
-  return {L,U};
+function backSub(U,y){
+let x=new Array(U.length);
+for(let i=U.length-1;i>=0;i--){
+let sum=y[i];
+for(let j=i+1;j<U.length;j++) sum-=U[i][j]*x[j];
+x[i]=sum/U[i][i];
+}
+return x;
 }
 
-function crout(A,n){
-  let L=Array.from({length:n},()=>Array(n).fill(0));
-  let U=Array.from({length:n},()=>Array(n).fill(0));
-  for(let j=0;j<n;j++) U[j][j]=1;
-
-  for(let j=0;j<n;j++){
-    for(let i=j;i<n;i++){
-      let sum=0;
-      for(let k=0;k<j;k++) sum+=L[i][k]*U[k][j];
-      L[i][j]=A[i][j]-sum;
-    }
-    for(let i=j+1;i<n;i++){
-      let sum=0;
-      for(let k=0;k<j;k++) sum+=L[j][k]*U[k][i];
-      U[j][i]=(A[j][i]-sum)/L[j][j];
-    }
-  }
-  return {L,U};
+function isSymmetric(A){
+for(let i=0;i<A.length;i++)
+for(let j=0;j<A.length;j++)
+if(A[i][j]!==A[j][i]) return false;
+return true;
 }
 
-function cholesky(A,n){
-  let L=Array.from({length:n},()=>Array(n).fill(0));
-  for(let i=0;i<n;i++){
-    for(let j=0;j<=i;j++){
-      let sum=0;
-      for(let k=0;k<j;k++) sum+=L[i][k]*L[j][k];
-
-      if(i===j){
-        L[i][j]=Math.sqrt(A[i][i]-sum);
-      } else {
-        L[i][j]=(A[i][j]-sum)/L[j][j];
-      }
-    }
-  }
-  return L;
+function cholesky(A){
+let n=A.length;
+let L=Array.from({length:n},()=>Array(n).fill(0));
+for(let i=0;i<n;i++){
+for(let j=0;j<=i;j++){
+let sum=0;
+for(let k=0;k<j;k++) sum+=L[i][k]*L[j][k];
+if(i===j){
+let val=A[i][i]-sum;
+if(val<=0) throw "No definida positiva";
+L[i][j]=Math.sqrt(val);
+}else{
+L[i][j]=(A[i][j]-sum)/L[j][j];
+}
+}
+}
+return L;
 }
 
-function format(M){
-  return M.map(f=>f.map(v=>v.toFixed(3).padStart(8)).join(" ")).join("\n");
+function doolittle(A){
+let n=A.length;
+let L=Array.from({length:n},()=>Array(n).fill(0));
+let U=Array.from({length:n},()=>Array(n).fill(0));
+for(let i=0;i<n;i++) L[i][i]=1;
+
+for(let j=0;j<n;j++){
+for(let i=0;i<=j;i++){
+let sum=0;
+for(let k=0;k<i;k++) sum+=L[i][k]*U[k][j];
+U[i][j]=A[i][j]-sum;
 }
+for(let i=j+1;i<n;i++){
+let sum=0;
+for(let k=0;k<j;k++) sum+=L[i][k]*U[k][j];
+if(U[j][j]===0) throw "Pivote 0";
+L[i][j]=(A[i][j]-sum)/U[j][j];
+}
+}
+return {L,U};
+}
+
+function crout(A){
+let n=A.length;
+let L=Array.from({length:n},()=>Array(n).fill(0));
+let U=Array.from({length:n},()=>Array(n).fill(0));
+for(let j=0;j<n;j++) U[j][j]=1;
+
+for(let j=0;j<n;j++){
+for(let i=j;i<n;i++){
+let sum=0;
+for(let k=0;k<j;k++) sum+=L[i][k]*U[k][j];
+L[i][j]=A[i][j]-sum;
+}
+for(let i=j+1;i<n;i++){
+let sum=0;
+for(let k=0;k<j;k++) sum+=L[j][k]*U[k][i];
+if(L[j][j]===0) throw "Pivote 0";
+U[j][i]=(A[j][i]-sum)/L[j][j];
+}
+}
+return {L,U};
+}
+
+function gauss(A,B){
+let n=A.length;
+let steps="";
+for(let i=0;i<n;i++){
+for(let k=i+1;k<n;k++){
+let f=A[k][i]/A[i][i];
+for(let j=i;j<n;j++) A[k][j]-=f*A[i][j];
+B[k]-=f*B[i];
+steps+=`F${k+1} = F${k+1} - (${f.toFixed(3)})F${i+1}\n`;
+}
+}
+let x=backSub(A,B);
+return {x,steps};
+}
+
+function format(M){return M.map(f=>f.map(v=>v.toFixed(3).padStart(8)).join(" ")).join("\n");}
 
 function resolver(){
-  let {A,B,n}=getData();
-  let m=metodo.value;
-  let res="";
+let {A,B}=getData();
+let m=metodo.value;
+let res="";
 
-  if(m==="gauss"){
-    let x=gauss(JSON.parse(JSON.stringify(A)),[...B],n);
-    res="Solución:\n"+x.map((v,i)=>`x${i+1}=${v.toFixed(3)}`).join("\n");
-  }
-  else if(m==="doolittle"){
-    let {L,U}=doolittle(A,n);
-    res="L:\n"+format(L)+"\n\nU:\n"+format(U);
-  }
-  else if(m==="crout"){
-    let {L,U}=crout(A,n);
-    res="L:\n"+format(L)+"\n\nU:\n"+format(U);
-  }
-  else if(m==="cholesky"){
-    let L=cholesky(A,n);
-    res="L:\n"+format(L);
-  }
+try{
+if(m==="gauss"){
+let {x,steps}=gauss(JSON.parse(JSON.stringify(A)),[...B]);
+res="PASOS:\n"+steps+"\nSolución:\n"+x.map((v,i)=>`x${i+1}=${v.toFixed(3)}`).join("\n");
+}
 
-  resultado.textContent=res;
+if(m==="doolittle"){
+let {L,U}=doolittle(A);
+let y=forwardSub(L,B);
+let x=backSub(U,y);
+res="L:\n"+format(L)+"\n\nU:\n"+format(U)+"\n\nSolución:\n"+x.map((v,i)=>`x${i+1}=${v.toFixed(3)}`).join("\n");
+}
+
+if(m==="crout"){
+let {L,U}=crout(A);
+let y=forwardSub(L,B);
+let x=backSub(U,y);
+res="L:\n"+format(L)+"\n\nU:\n"+format(U)+"\n\nSolución:\n"+x.map((v,i)=>`x${i+1}=${v.toFixed(3)}`).join("\n");
+}
+
+if(m==="cholesky"){
+if(!isSymmetric(A)) throw "No es simétrica";
+let L=cholesky(A);
+let y=forwardSub(L,B);
+let x=backSub(L.map((_,i)=>L.map(r=>r[i])),y);
+res="L:\n"+format(L)+"\n\nSolución:\n"+x.map((v,i)=>`x${i+1}=${v.toFixed(3)}`).join("\n");
+}
+
+resultado.textContent=res;
+}catch(e){resultado.textContent="Error: "+e;}
 }
 </script>
 
